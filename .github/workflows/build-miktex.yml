@@ -1,0 +1,27 @@
+name: Build and Release the MiKTeX apk package
+
+on: release
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+#          ref: ${{ github.event.release.head.sha }}
+          path: miktex/source
+      - name: Build the MiKTeX apk package
+        run: |
+          mkdir -p miktex/builds/alpine-latest
+          docker run -t \
+            -v miktex/source:/miktex/source:ro \
+            -v miktex/builds/alpine-latest:/miktex/build:rw \
+            -e USER_ID=`id -u` \
+            -e GROUP_ID=`id -g` \
+            maboloshi/miktex-build-alpine:latest
+      - name: Upload to release
+        uses: maboloshi/upload-to-release@master
+        with:
+          files: miktex/builds/alpine-latest/miktex-*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
